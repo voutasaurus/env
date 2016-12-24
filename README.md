@@ -1,4 +1,4 @@
 # env
 Parse environment variables into Go values
 
-See https://github.com/voutasaurus/env for documentation.
+See https://godoc.org/github.com/voutasaurus/env for documentation.
