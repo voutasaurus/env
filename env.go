@@ -33,7 +33,7 @@ func SetParseLog(logFunc func(error)) struct{} {
 // empty) is returned.
 // Otherwise the returned value will be the default value specified by the
 // value argument.
-func String(key, value, description string) string {
+func String(key, value, usage string) string {
 	if v, ok := os.LookupEnv(key); ok {
 		return v
 	}
@@ -45,7 +45,7 @@ func String(key, value, description string) string {
 // be empty) is returned.
 // Otherwise this function logs an error to the default log and causes an
 // os.Exit.
-func MustString(key, description string) string {
+func MustString(key, usage string) string {
 	v, ok := os.LookupEnv(key)
 	if !ok {
 		log.Fatalf("env: %v not set", key)
@@ -59,7 +59,7 @@ func MustString(key, description string) string {
 // Otherwise the returned value will be the default value specified by the
 // value argument.
 // If the parse fails the logger set in SetParseLog will be called.
-func Int(key string, value int, description string) int {
+func Int(key string, value int, usage string) int {
 	if s, ok := os.LookupEnv(key); ok {
 		v, err := strconv.Atoi(s)
 		if err == nil {
@@ -75,7 +75,7 @@ func Int(key string, value int, description string) int {
 // successfully parses into an int then that int is returned.
 // Otherwise this function logs an error to the default log and causes an
 // os.Exit.
-func MustInt(key, description string) int {
+func MustInt(key, usage string) int {
 	s, ok := os.LookupEnv(key)
 	if !ok {
 		log.Fatalf("env: %v not set", key)
@@ -93,7 +93,7 @@ func MustInt(key, description string) int {
 // Otherwise the returned value will be the default value specified by the
 // value argument.
 // If the parse fails the logger set in SetParseLog will be called.
-func Int64(key string, value int64, description string) int64 {
+func Int64(key string, value int64, usage string) int64 {
 	if s, ok := os.LookupEnv(key); ok {
 		v, err := strconv.ParseInt(s, 10, 0)
 		if err == nil {
@@ -109,7 +109,7 @@ func Int64(key string, value int64, description string) int64 {
 // successfully parses into an int64 then that int64 is returned.
 // Otherwise this function logs an error to the default log and causes an
 // os.Exit.
-func MustInt64(key, description string) int64 {
+func MustInt64(key, usage string) int64 {
 	s, ok := os.LookupEnv(key)
 	if !ok {
 		log.Fatalf("env: %v not set", key)
@@ -128,7 +128,7 @@ func MustInt64(key, description string) int64 {
 // returned bool will be false.
 // If the variable is present and set to anything not in the false values
 // listed above, then the returned bool will be true.
-func Bool(key string, value bool, description string) bool {
+func Bool(key string, value bool, usage string) bool {
 	if s, ok := os.LookupEnv(key); ok {
 		switch s {
 		case "0", "false", "False", "f", "F", "n", "N":
@@ -146,7 +146,7 @@ func Bool(key string, value bool, description string) bool {
 // Otherwise the returned value will be the default value specified by the
 // value argument.
 // If the parse fails the logger set in SetParseLog will be called.
-func Duration(key string, value time.Duration, description string) time.Duration {
+func Duration(key string, value time.Duration, usage string) time.Duration {
 	if s, ok := os.LookupEnv(key); ok {
 		v, err := time.ParseDuration(s)
 		if err == nil {
@@ -163,7 +163,7 @@ func Duration(key string, value time.Duration, description string) time.Duration
 // returned.
 // Otherwise this function logs an error to the default log and causes an
 // os.Exit.
-func MustDuration(key, description string) time.Duration {
+func MustDuration(key, usage string) time.Duration {
 	s, ok := os.LookupEnv(key)
 	if !ok {
 		log.Fatalf("env: %v not set", key)
@@ -181,7 +181,7 @@ func MustDuration(key, description string) time.Duration {
 // Otherwise the returned value will be the default value specified by the
 // value argument.
 // If the parse fails the logger set in SetParseLog will be called.
-func Uint(key string, value uint, description string) uint {
+func Uint(key string, value uint, usage string) uint {
 	if s, ok := os.LookupEnv(key); ok {
 		v, err := strconv.ParseUint(s, 10, 0)
 		if err == nil {
@@ -197,7 +197,7 @@ func Uint(key string, value uint, description string) uint {
 // successfully parses into an uint then that uint is returned.
 // Otherwise this function logs an error to the default log and causes an
 // os.Exit.
-func MustUint(key, description string) uint {
+func MustUint(key, usage string) uint {
 	s, ok := os.LookupEnv(key)
 	if !ok {
 		log.Fatalf("env: %v not set")
@@ -215,7 +215,7 @@ func MustUint(key, description string) uint {
 // Otherwise the returned value will be the default value specified by the
 // value argument.
 // If the parse fails the logger set in SetParseLog will be called.
-func Uint64(key string, value uint64, description string) uint64 {
+func Uint64(key string, value uint64, usage string) uint64 {
 	if s, ok := os.LookupEnv(key); ok {
 		v, err := strconv.ParseUint(s, 10, 0)
 		if err == nil {
@@ -231,7 +231,7 @@ func Uint64(key string, value uint64, description string) uint64 {
 // successfully parses into an uint64 then that uint64 is returned.
 // Otherwise this function logs an error to the default log and causes an
 // os.Exit.
-func MustUint64(key, description string) uint64 {
+func MustUint64(key, usage string) uint64 {
 	s, ok := os.LookupEnv(key)
 	if !ok {
 		log.Fatalf("env: %v not set")
