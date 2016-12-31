@@ -200,7 +200,7 @@ func Uint(key string, value uint, usage string) uint {
 func MustUint(key, usage string) uint {
 	s, ok := os.LookupEnv(key)
 	if !ok {
-		log.Fatalf("env: %v not set")
+		log.Fatalf("env: %v not set", key)
 	}
 	v, err := strconv.ParseUint(s, 10, 0)
 	if err != nil {
@@ -234,7 +234,7 @@ func Uint64(key string, value uint64, usage string) uint64 {
 func MustUint64(key, usage string) uint64 {
 	s, ok := os.LookupEnv(key)
 	if !ok {
-		log.Fatalf("env: %v not set")
+		log.Fatalf("env: %v not set", key)
 	}
 	v, err := strconv.ParseUint(s, 10, 0)
 	if err != nil {
