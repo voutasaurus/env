@@ -1,244 +1,61 @@
 package env
 
 import (
-	"log"
 	"os"
 	"strconv"
-	"time"
+	"strings"
 )
 
-var parseLog = func(error) {}
+// Var holds details for an environment variable
+type Var struct {
+	Key   string
+	Value string
+	Set   bool
+}
 
-// SetParseLog sets up a logger for parse errors on environment variables with
-// default values configured. The default value will be returned on a parse
-// failure but the provided log function will also be called.
+// Get reads an environment variable from the OS
+func Get(key string) Var {
+	value, set := os.LookupEnv(key)
+	return Var{Key: key, Value: value, Set: set}
+}
+
+// WithDefault returns the value of the environment variable if it is set.
+// Otherwise it returns the provided default value.
+func (e Var) WithDefault(value string) string {
+	if e.Set {
+		return e.Value
+	}
+	return value
+}
+
+// Required returns the value of the environment variable if it is set.
+// Otheriwse it will call provided error func and return an empty string.
 //
-// To set the log function, as the first var in your var block put
+// Example:
+//  env.Get("SOME_ENVIRONMENT_VARIABLE").Required(func(key string) { log.Fatalf("%q must be set", key) })
 //
-// 	_ = env.SetParseLog(func(err error) {
-// 		// custom logging code goes here
-// 	})
-//
-// This way the log function will be initialized before calls to env functions
-// that parse, such as Int and Duration.
-//
-// The default log function is a nop (does not log anything).
-func SetParseLog(logFunc func(error)) struct{} {
-	parseLog = logFunc
-	return struct{}{}
-}
-
-// String retrieves the string value of the environment variable named by the
-// key. If the variable is present in the environment the value (which may be
-// empty) is returned.
-// Otherwise the returned value will be the default value specified by the
-// value argument.
-func String(key, value, usage string) string {
-	if v, ok := os.LookupEnv(key); ok {
-		return v
+func (e Var) Required(errlog func(key string)) string {
+	if !e.Set {
+		errlog(e.Key)
 	}
-	return value
+	return e.Value
 }
 
-// MustString retrieves the string value of the environment variable named by
-// the key. If the variable is present in the environment the value (which may
-// be empty) is returned.
-// Otherwise this function logs an error to the default log and causes an
-// os.Exit.
-func MustString(key, usage string) string {
-	v, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("env: %v not set", key)
+// WithDefaultInt attempts to read an integer from the Var, returns value if
+// Var is unset, and calls errlog if the Var is set to something that is not
+// parsable as an integer.
+func (e Var) WithDefaultInt(value int, errlog func(key string, parseErr error)) int {
+	if !e.Set {
+		return value
+	}
+	v, err := strconv.Atoi(e.Value)
+	if err != nil {
+		errlog(e.Key, err)
 	}
 	return v
 }
 
-// Int retrieves the int value of the environment variable named by the key. If
-// the variable is present in the environment and the value successfully parses
-// into an int then that int is returned.
-// Otherwise the returned value will be the default value specified by the
-// value argument.
-// If the parse fails the logger set in SetParseLog will be called.
-func Int(key string, value int, usage string) int {
-	if s, ok := os.LookupEnv(key); ok {
-		v, err := strconv.Atoi(s)
-		if err == nil {
-			return v
-		}
-		parseLog(err)
-	}
-	return value
-}
-
-// MustInt retrieves the int value of the environment variable named by the
-// key. If the variable is present in the environment and the value
-// successfully parses into an int then that int is returned.
-// Otherwise this function logs an error to the default log and causes an
-// os.Exit.
-func MustInt(key, usage string) int {
-	s, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("env: %v not set", key)
-	}
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		log.Fatalf("env: %v parse error: %v", key, err)
-	}
-	return v
-}
-
-// Int64 retrieves the int64 value of the environment variable named by the
-// key. If the variable is present in the environment and the value
-// successfully parses into an int64 then that int64 is returned.
-// Otherwise the returned value will be the default value specified by the
-// value argument.
-// If the parse fails the logger set in SetParseLog will be called.
-func Int64(key string, value int64, usage string) int64 {
-	if s, ok := os.LookupEnv(key); ok {
-		v, err := strconv.ParseInt(s, 10, 0)
-		if err == nil {
-			return v
-		}
-		parseLog(err)
-	}
-	return value
-}
-
-// MustInt64 retrieves the int64 value of the environment variable named by the
-// key. If the variable is present in the environment and the value
-// successfully parses into an int64 then that int64 is returned.
-// Otherwise this function logs an error to the default log and causes an
-// os.Exit.
-func MustInt64(key, usage string) int64 {
-	s, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("env: %v not set", key)
-	}
-	v, err := strconv.ParseInt(s, 10, 0)
-	if err != nil {
-		log.Fatalf("env: %v parse error: %v", key, err)
-	}
-	return v
-}
-
-// Bool retrieves the bool value of the environment variable named by the key.
-// If the variable is not present in the environment then the returned bool is
-// false. Also, if the variable is present in the environment and is set to any
-// of the strings "0", "false", "False", "f", "F", "n", or "N", then the
-// returned bool will be false.
-// If the variable is present and set to anything not in the false values
-// listed above, then the returned bool will be true.
-func Bool(key string, value bool, usage string) bool {
-	if s, ok := os.LookupEnv(key); ok {
-		switch s {
-		case "0", "false", "False", "f", "F", "n", "N":
-			return false
-		}
-		return true
-	}
-	return value
-}
-
-// Duration retrieves the time.Duration value of the environment variable named
-// by the key. If the variable is present in the environment and the value
-// successfully parses into a time.Duration then that time.Duration value is
-// returned.
-// Otherwise the returned value will be the default value specified by the
-// value argument.
-// If the parse fails the logger set in SetParseLog will be called.
-func Duration(key string, value time.Duration, usage string) time.Duration {
-	if s, ok := os.LookupEnv(key); ok {
-		v, err := time.ParseDuration(s)
-		if err == nil {
-			return v
-		}
-		parseLog(err)
-	}
-	return value
-}
-
-// MustDuration retrieves the time.Duration value of the environment variable
-// named by the key. If the variable is present in the environment and the
-// value successfully parses into an time.Duration then that time.Duration is
-// returned.
-// Otherwise this function logs an error to the default log and causes an
-// os.Exit.
-func MustDuration(key, usage string) time.Duration {
-	s, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("env: %v not set", key)
-	}
-	v, err := time.ParseDuration(s)
-	if err != nil {
-		log.Fatalf("env: %v parse error: %v", key, err)
-	}
-	return v
-}
-
-// Uint retrieves the uint value of the environment variable named by the key.
-// If the variable is present in the environment and the value successfully
-// parses into an uint then that uint is returned.
-// Otherwise the returned value will be the default value specified by the
-// value argument.
-// If the parse fails the logger set in SetParseLog will be called.
-func Uint(key string, value uint, usage string) uint {
-	if s, ok := os.LookupEnv(key); ok {
-		v, err := strconv.ParseUint(s, 10, 0)
-		if err == nil {
-			return uint(v)
-		}
-		parseLog(err)
-	}
-	return value
-}
-
-// MustUint retrieves the uint value of the environment variable named by the
-// key. If the variable is present in the environment and the value
-// successfully parses into an uint then that uint is returned.
-// Otherwise this function logs an error to the default log and causes an
-// os.Exit.
-func MustUint(key, usage string) uint {
-	s, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("env: %v not set", key)
-	}
-	v, err := strconv.ParseUint(s, 10, 0)
-	if err != nil {
-		log.Fatalf("env: %v parse error: %v", key, err)
-	}
-	return uint(v)
-}
-
-// Uint64 retrieves the uint64 value of the environment variable named by the
-// key. If the variable is present in the environment and the value
-// successfully parses into an uint64 then that uint64 is returned.
-// Otherwise the returned value will be the default value specified by the
-// value argument.
-// If the parse fails the logger set in SetParseLog will be called.
-func Uint64(key string, value uint64, usage string) uint64 {
-	if s, ok := os.LookupEnv(key); ok {
-		v, err := strconv.ParseUint(s, 10, 0)
-		if err == nil {
-			return v
-		}
-		parseLog(err)
-	}
-	return value
-}
-
-// MustUint64 retrieves the uint64 value of the environment variable named by
-// the key. If the variable is present in the environment and the value
-// successfully parses into an uint64 then that uint64 is returned.
-// Otherwise this function logs an error to the default log and causes an
-// os.Exit.
-func MustUint64(key, usage string) uint64 {
-	s, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("env: %v not set", key)
-	}
-	v, err := strconv.ParseUint(s, 10, 0)
-	if err != nil {
-		log.Fatalf("env: %v parse error: %v", key, err)
-	}
-	return v
+// List returns the individual values of a comma separated list from a Var.
+func (e Var) List(sep string) []string {
+	return strings.Split(e.Value, sep)
 }
