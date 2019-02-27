@@ -89,27 +89,3 @@ func readURL(url string) ([]byte, error) {
 	}
 	return b, nil
 }
-
-func (e Var) File(errlog func(key string, err error)) []byte {
-	if !e.Set {
-		errlog(e.Key, nil)
-	}
-	b, err := readFile(e.Value)
-	if err != nil {
-		errlog(e.Key, err)
-	}
-	return b
-}
-
-func readFile(filename string) ([]byte, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, fmt.Errorf("error getting from remote: %v", err)
-	}
-	defer f.Close()
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, fmt.Errorf("error reading: %v", err)
-	}
-	return b, nil
-}
