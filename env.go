@@ -1,6 +1,9 @@
 package env
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -58,4 +61,31 @@ func (e Var) WithDefaultInt(value int, errlog func(key string, parseErr error)) 
 // List returns the individual values of a comma separated list from a Var.
 func (e Var) List(sep string) []string {
 	return strings.Split(e.Value, sep)
+}
+
+func (e Var) Remote(errlog func(key string, err error)) []byte {
+	if !e.Set {
+		errlog(e.Key, nil)
+	}
+	b, err := readURL(e.Value)
+	if err != nil {
+		errlog(e.Key, err)
+	}
+	return b
+}
+
+func readURL(url string) ([]byte, error) {
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error getting from remote: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("bad status getting from remote: %v", res.StatusCode)
+	}
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading: %v", err)
+	}
+	return b, nil
 }
